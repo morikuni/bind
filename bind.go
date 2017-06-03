@@ -9,15 +9,15 @@ import (
 )
 
 type Getter interface {
-	Get(key string) string
+	Get(key string) []string
 }
 
 type requestGetter struct {
 	*http.Request
 }
 
-func (g requestGetter) Get(key string) string {
-	return g.FormValue(key)
+func (g requestGetter) Get(key string) []string {
+	return g.Form[key]
 }
 
 func FromRequest(r *http.Request, target interface{}) error {
@@ -28,8 +28,11 @@ type mapGetter struct {
 	m map[string]string
 }
 
-func (g mapGetter) Get(key string) string {
-	return g.m[key]
+func (g mapGetter) Get(key string) []string {
+	if v, ok := g.m[key]; ok {
+		return []string{v}
+	}
+	return nil
 }
 
 func FromMap(m map[string]string, target interface{}) error {
@@ -49,8 +52,8 @@ func FromGetter(getter Getter, target interface{}) error {
 		if !ok {
 			tag = field.Name
 		}
-		value := getter.Get(tag)
-		err := assignValue(value, targetValue.Elem().Field(i))
+		values := getter.Get(tag)
+		err := assignValue(values, targetValue.Elem().Field(i))
 		if err != nil {
 			return err
 		}
@@ -59,8 +62,8 @@ func FromGetter(getter Getter, target interface{}) error {
 	return nil
 }
 
-func assignValue(value string, target reflect.Value) error {
-	if value == "" {
+func assignValue(values []string, target reflect.Value) error {
+	if len(values) == 0 {
 		target.Set(reflect.Zero(target.Type()))
 		return nil
 	}
@@ -70,6 +73,11 @@ func assignValue(value string, target reflect.Value) error {
 			target.Set(reflect.New(target.Type().Elem()))
 		}
 		target = target.Elem()
+	}
+	value := values[0]
+	if value == "" {
+		target.Set(reflect.Zero(target.Type()))
+		return nil
 	}
 
 	switch target.Kind() {
