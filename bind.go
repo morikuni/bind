@@ -53,7 +53,11 @@ func FromGetter(getter Getter, target interface{}) error {
 			tag = field.Name
 		}
 		values := getter.Get(tag)
-		err := assignValue(values, targetValue.Elem().Field(i))
+		target := targetValue.Elem().Field(i)
+		if !target.CanSet() {
+			continue
+		}
+		err := assignValue(values, target)
 		if err != nil {
 			return err
 		}
