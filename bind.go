@@ -1,8 +1,6 @@
 package bind
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -41,8 +39,14 @@ func FromMap(m map[string]string, target interface{}) error {
 
 func FromGetter(getter Getter, target interface{}) error {
 	targetValue := reflect.ValueOf(target)
-	if targetValue.Kind() != reflect.Ptr || targetValue.IsNil() {
-		return errors.New("target is not pointer or nil")
+	if targetValue.Kind() != reflect.Ptr {
+		return ErrNotPointer
+	}
+	if targetValue.IsNil() {
+		return ErrNil
+	}
+	if targetValue.Elem().Kind() != reflect.Struct {
+		return ErrNotStructPointer
 	}
 
 	targetType := reflect.TypeOf(target).Elem()
@@ -88,19 +92,19 @@ func assignValue(values []string, target reflect.Value) error {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		n, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return err
+			return RaiseConvertError(value, target.Type())
 		}
 		target.SetInt(n)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		n, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return err
+			return RaiseConvertError(value, target.Type())
 		}
 		target.SetUint(n)
 	case reflect.Float32, reflect.Float64:
 		f, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return err
+			return RaiseConvertError(value, target.Type())
 		}
 		target.SetFloat(f)
 	case reflect.String:
@@ -108,11 +112,11 @@ func assignValue(values []string, target reflect.Value) error {
 	case reflect.Bool:
 		b, err := strconv.ParseBool(value)
 		if err != nil {
-			return err
+			return RaiseConvertError(value, target.Type())
 		}
 		target.SetBool(b)
 	default:
-		return fmt.Errorf("cannot set to %s", target.Kind().String())
+		return RaiseConvertError(value, target.Type())
 	}
 
 	return nil
