@@ -11,16 +11,9 @@ type Getter interface {
 	Get(key string) []string
 }
 
-type requestGetter struct {
-	*http.Request
-}
-
-func (g requestGetter) Get(key string) []string {
-	return g.Form[key]
-}
-
 func FromRequest(r *http.Request, target interface{}) error {
-	return FromGetter(requestGetter{r}, target)
+	r.ParseForm()
+	return FromValues(r.Form, target)
 }
 
 type mapGetter struct {
