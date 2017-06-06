@@ -2,6 +2,7 @@ package bind
 
 import (
 	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 )
@@ -35,6 +36,18 @@ func (g mapGetter) Get(key string) []string {
 
 func FromMap(m map[string]string, target interface{}) error {
 	return FromGetter(mapGetter{m}, target)
+}
+
+type valuesGetter struct {
+	v url.Values
+}
+
+func (g valuesGetter) Get(key string) []string {
+	return g.v[key]
+}
+
+func FromValues(v url.Values, target interface{}) error {
+	return FromGetter(valuesGetter{v}, target)
 }
 
 func FromGetter(getter Getter, target interface{}) error {
