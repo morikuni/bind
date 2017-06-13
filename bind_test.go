@@ -1,6 +1,7 @@
 package bind
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/morikuni/pointer"
@@ -178,6 +179,58 @@ func TestInvalidTargetTypes(t *testing.T) {
 
 			err := FromMap(map[string]string{}, test.Input)
 			assert.Equal(test.Expect, err)
+		})
+	}
+}
+
+func TestSlice(t *testing.T) {
+	type Slice struct {
+		Ints []int
+	}
+
+	type TestCase struct {
+		Description string
+		Input       url.Values
+		Expect      Slice
+	}
+
+	table := []TestCase{
+		{
+			Description: "ok",
+			Input: url.Values{
+				"Ints": []string{"1", "2"},
+			},
+			Expect: Slice{[]int{1, 2}},
+		},
+		{
+			Description: "empty string",
+			Input: url.Values{
+				"Ints": []string{""},
+			},
+			Expect: Slice{[]int{0}},
+		},
+		{
+			Description: "no value",
+			Input: url.Values{
+				"Ints": []string{},
+			},
+			Expect: Slice{nil},
+		},
+		{
+			Description: "no input",
+			Input:       url.Values{},
+			Expect:      Slice{nil},
+		},
+	}
+
+	for _, test := range table {
+		t.Run(test.Description, func(t *testing.T) {
+			assert := assert.New(t)
+
+			slice := Slice{}
+			err := FromValues(test.Input, &slice)
+			assert.NoError(err)
+			assert.Equal(test.Expect, slice)
 		})
 	}
 }
