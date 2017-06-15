@@ -100,7 +100,7 @@ func assignValue(values []string, target reflect.Value) error {
 		target.Set(s)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if value == "" {
-			target.Set(reflect.Zero(target.Type()))
+			target.SetInt(0)
 			return nil
 		}
 		n, err := strconv.ParseInt(value, 10, 64)
@@ -110,7 +110,7 @@ func assignValue(values []string, target reflect.Value) error {
 		target.SetInt(n)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		if value == "" {
-			target.Set(reflect.Zero(target.Type()))
+			target.SetUint(0)
 			return nil
 		}
 		n, err := strconv.ParseUint(value, 10, 64)
@@ -120,7 +120,7 @@ func assignValue(values []string, target reflect.Value) error {
 		target.SetUint(n)
 	case reflect.Float32, reflect.Float64:
 		if value == "" {
-			target.Set(reflect.Zero(target.Type()))
+			target.SetFloat(0)
 			return nil
 		}
 		f, err := strconv.ParseFloat(value, 64)
@@ -129,14 +129,10 @@ func assignValue(values []string, target reflect.Value) error {
 		}
 		target.SetFloat(f)
 	case reflect.String:
-		if value == "" {
-			target.Set(reflect.Zero(target.Type()))
-			return nil
-		}
 		target.SetString(value)
 	case reflect.Bool:
 		if value == "" {
-			target.Set(reflect.Zero(target.Type()))
+			target.SetBool(false)
 			return nil
 		}
 		b, err := strconv.ParseBool(value)
